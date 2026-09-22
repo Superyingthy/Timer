@@ -1,0 +1,17 @@
+{
+  "name": "步驟計時",
+  "short_name": "計時",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ff1493",
+  "theme_color": "#ff1493",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
