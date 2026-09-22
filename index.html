@@ -737,5 +737,27 @@ document.getElementById('editSave').addEventListener('click', function(){
 load();
 })();
 </script>
+<script>
+// 自動全屏
+function goFullscreen(){
+  var el = document.documentElement;
+  var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if(fn) fn.call(el).catch(function(){});
+  if(screen.orientation && screen.orientation.lock){
+    screen.orientation.lock('portrait').catch(function(){});
+  }
+}
+// 第一次撳畫面任何位置就觸發
+document.addEventListener('touchstart', function once(){
+  goFullscreen();
+  document.removeEventListener('touchstart', once);
+}, { once: true, passive: true });
+document.addEventListener('click', function once(){
+  goFullscreen();
+  document.removeEventListener('click', once);
+}, { once: true });
+</script>
+</body>
+</html>
 </body>
 </html>
