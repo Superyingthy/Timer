@@ -1,0 +1,740 @@
+
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#ff1493">
+<title>♡ 步驟計時 ♡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Fredoka','PingFang HK','Microsoft JhengHei',sans-serif;
+  background:linear-gradient(160deg,#ffc2e2 0%,#ff7ec4 40%,#ff1493 100%);
+  background-attachment:fixed;
+  color:#6b0035;user-select:none;-webkit-user-select:none;
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.9) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(255,255,255,.5) 1px, transparent 1px);
+  background-size:80px 80px,50px 50px;
+  background-position:0 0,25px 25px;
+  animation:sparkle 8s linear infinite;
+}
+@keyframes sparkle{
+  0%{opacity:.7;background-position:0 0,25px 25px}
+  50%{opacity:1;background-position:20px 20px,45px 45px}
+  100%{opacity:.7;background-position:40px 40px,65px 65px}
+}
+.view{display:flex;flex-direction:column;height:100%;overflow:hidden;position:relative;z-index:1}
+.hidden{display:none!important}
+.main{padding:14px 14px 0;display:flex;flex-direction:column;gap:10px;flex:1;overflow:hidden;min-height:0}
+.total-label{
+  font-family:'Pacifico',cursive;
+  font-size:18px;color:#fff;text-align:center;margin-top:4px;
+  text-shadow:2px 2px 0 #c71585,0 0 12px rgba(255,255,255,.6);
+  letter-spacing:1px;
+}
+.total-time{
+  font-family:'Fredoka',sans-serif;
+  font-size:60px;font-weight:700;text-align:center;color:#fff;
+  font-variant-numeric:tabular-nums;line-height:1;
+  text-shadow:
+    3px 3px 0 #c71585,
+    -1px -1px 0 #ff69b4,
+    0 0 20px rgba(255,255,255,.7);
+  letter-spacing:2px;
+  transition:color .3s;
+  animation:bounce 2.5s ease-in-out infinite;
+}
+@keyframes bounce{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.03)}
+}
+.total-time.warn{color:#fff8b8;text-shadow:3px 3px 0 #b45309,0 0 20px rgba(255,255,255,.7)}
+.total-time.danger{color:#fff;text-shadow:3px 3px 0 #be123c,0 0 25px rgba(255,200,200,.9)}
+.progress{
+  height:12px;background:rgba(255,255,255,.4);
+  border-radius:10px;overflow:hidden;margin:0 8px;
+  border:2px solid #fff;
+  box-shadow:0 0 12px rgba(255,255,255,.5),inset 0 2px 4px rgba(199,21,133,.2);
+}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,#fff,#ffe0f0,#fff);
+  width:0%;transition:width .3s;border-radius:10px;
+  background-size:200% 100%;
+  animation:shine 2s linear infinite;
+}
+@keyframes shine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.current-card{
+  background:linear-gradient(145deg,#fff,#ffd6e9);
+  border:3px solid #fff;border-radius:26px;padding:16px;text-align:center;
+  box-shadow:0 10px 0 #c71585,0 14px 30px rgba(199,21,133,.4);
+  position:relative;
+  margin-top:4px;
+}
+.current-card::before{
+  content:'✨';position:absolute;top:-14px;left:12px;font-size:22px;
+  animation:twinkle 1.5s ease-in-out infinite;
+}
+.current-card::after{
+  content:'✨';position:absolute;top:-14px;right:12px;font-size:22px;
+  animation:twinkle 1.5s ease-in-out infinite .75s;
+}
+@keyframes twinkle{
+  0%,100%{transform:scale(1) rotate(0deg);opacity:1}
+  50%{transform:scale(1.3) rotate(20deg);opacity:.6}
+}
+.step-index{
+  font-size:12px;color:#c71585;letter-spacing:2px;font-weight:600;
+  text-transform:uppercase;
+}
+.step-name{
+  font-family:'Pacifico',cursive;
+  font-size:26px;font-weight:400;margin:8px 0;
+  word-break:break-all;color:#ff1493;
+  text-shadow:1px 1px 0 #ffd6e9;
+}
+.step-time{
+  font-family:'Fredoka',sans-serif;
+  font-size:42px;font-weight:700;color:#c71585;
+  font-variant-numeric:tabular-nums;line-height:1;
+  text-shadow:2px 2px 0 #ffd6e9;
+}
+.step-time.warn{color:#ea580c}
+.step-time.danger{color:#be123c}
+.controls{display:flex;gap:8px;justify-content:center;align-items:center;padding:0 6px;margin-top:2px}
+.controls button{
+  background:linear-gradient(145deg,#fff,#ffd6e9);
+  border:3px solid #fff;color:#ff1493;border-radius:18px;
+  font-size:20px;padding:12px 14px;cursor:pointer;font-family:'Fredoka',sans-serif;
+  transition:transform .1s;font-weight:700;
+  box-shadow:0 5px 0 #c71585,0 6px 12px rgba(199,21,133,.3);
+}
+.controls button:active{
+  transform:translateY(4px);
+  box-shadow:0 1px 0 #c71585,0 2px 6px rgba(199,21,133,.3);
+}
+.controls .main-btn{
+  flex:1;
+  background:linear-gradient(145deg,#ff69b4,#ff1493);
+  border:3px solid #fff;
+  font-family:'Pacifico',cursive;
+  font-size:20px;font-weight:400;padding:16px 20px;color:#fff;
+  box-shadow:0 5px 0 #c71585,0 8px 20px rgba(199,21,133,.5);
+  letter-spacing:1px;text-shadow:1px 1px 0 #c71585;
+}
+.controls .main-btn:active{
+  box-shadow:0 1px 0 #c71585,0 2px 8px rgba(199,21,133,.4);
+}
+.step-list{flex:1;overflow-y:auto;padding:6px 2px 20px;-webkit-overflow-scrolling:touch;min-height:0}
+.step-item{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;
+  border-radius:18px;margin-bottom:6px;
+  background:linear-gradient(145deg,#fff,#ffe0f0);
+  border:2.5px solid #fff;
+  box-shadow:0 4px 0 rgba(199,21,133,.25),0 5px 10px rgba(199,21,133,.15);
+  transition:transform .15s;
+}
+.step-item.current{
+  background:linear-gradient(135deg,#ff69b4,#ff1493);
+  border-color:#fff;
+  box-shadow:0 5px 0 #c71585,0 8px 20px rgba(199,21,133,.5);
+  transform:scale(1.02);
+}
+.step-item.current .name{color:#fff;text-shadow:1px 1px 0 #c71585}
+.step-item.current .num{background:#fff;color:#ff1493;box-shadow:0 0 8px rgba(255,255,255,.8)}
+.step-item.current .t{color:#fff;text-shadow:1px 1px 0 #c71585}
+.step-item.done{opacity:.55}
+.step-item .num{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(145deg,#ff69b4,#ff1493);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;flex-shrink:0;
+  box-shadow:0 2px 0 #c71585;
+}
+.step-item.done .num{
+  background:linear-gradient(145deg,#d946a8,#a3146b);
+}
+.step-item .name{
+  flex:1;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-weight:500;color:#6b0035;font-family:'Fredoka',sans-serif;
+}
+.step-item.done .name{text-decoration:line-through}
+.step-item .t{
+  font-size:14px;color:#ff1493;font-variant-numeric:tabular-nums;font-weight:700;
+  font-family:'Fredoka',sans-serif;
+}
+.settings-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 16px;
+  padding-top:calc(14px + env(safe-area-inset-top));
+  flex-shrink:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0));
+}
+.settings-header button{
+  background:linear-gradient(145deg,#fff,#ffd6e9);
+  border:3px solid #fff;color:#ff1493;
+  font-size:15px;font-family:'Pacifico',cursive;cursor:pointer;
+  padding:8px 14px;border-radius:14px;font-weight:400;
+  box-shadow:0 4px 0 #c71585;
+  text-shadow:1px 1px 0 #ffd6e9;
+}
+.settings-header button:active{transform:translateY(3px);box-shadow:0 1px 0 #c71585}
+.settings-total{
+  font-size:14px;color:#fff;font-weight:600;
+  text-shadow:1px 1px 0 #c71585;
+  font-family:'Fredoka',sans-serif;
+}
+.settings-list{
+  flex:1;overflow-y:auto;padding:0 8px;
+  -webkit-overflow-scrolling:touch;min-height:0;touch-action:pan-y;
+}
+.settings-row{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 14px;margin-bottom:6px;
+  border-radius:16px;
+  background:linear-gradient(145deg,#fff,#ffe0f0);
+  border:2.5px solid #fff;
+  box-shadow:0 4px 0 rgba(199,21,133,.25);
+  position:relative;
+}
+.settings-row.dragging{
+  background:linear-gradient(145deg,#ff69b4,#ff1493);
+  box-shadow:0 10px 25px rgba(199,21,133,.6);
+  z-index:100;opacity:.97;
+  transform:scale(1.03);
+}
+.settings-row.dragging .name,
+.settings-row.dragging .t{color:#fff;text-shadow:1px 1px 0 #c71585}
+.drag-handle{
+  color:#ff1493;font-size:22px;padding:0 4px 0 0;
+  cursor:grab;touch-action:none;flex-shrink:0;line-height:1;
+  font-weight:700;
+}
+.settings-row.dragging .drag-handle{color:#fff}
+.settings-row .name{
+  flex:1;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-weight:500;color:#6b0035;font-family:'Fredoka',sans-serif;
+}
+.settings-row .t{
+  font-size:14px;color:#ff1493;font-variant-numeric:tabular-nums;
+  flex-shrink:0;font-weight:700;font-family:'Fredoka',sans-serif;
+}
+.settings-row .edit-btn{
+  background:linear-gradient(145deg,#ff69b4,#ff1493);
+  border:2px solid #fff;color:#fff;
+  border-radius:10px;font-size:14px;padding:7px 11px;
+  cursor:pointer;font-family:'Fredoka',sans-serif;flex-shrink:0;
+  font-weight:700;box-shadow:0 2px 0 #c71585;
+}
+.settings-row .edit-btn:active{transform:translateY(2px);box-shadow:none}
+.add-btn{
+  margin:10px 16px calc(16px + env(safe-area-inset-bottom));
+  padding:16px;
+  background:linear-gradient(145deg,#ff69b4,#ff1493);
+  border:3px solid #fff;
+  color:#fff;border-radius:20px;
+  font-family:'Pacifico',cursive;
+  font-size:18px;font-weight:400;
+  cursor:pointer;flex-shrink:0;
+  box-shadow:0 6px 0 #c71585,0 10px 24px rgba(199,21,133,.5);
+  text-shadow:1px 1px 0 #c71585;
+  letter-spacing:1px;
+}
+.add-btn:active{transform:translateY(5px);box-shadow:0 1px 0 #c71585}
+.settings-hint{
+  font-size:12px;color:#fff;text-align:center;
+  padding:8px 16px;flex-shrink:0;font-weight:500;
+  text-shadow:1px 1px 0 #c71585;
+  font-family:'Fredoka',sans-serif;
+}
+.modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-bg{position:absolute;inset:0;background:rgba(199,21,133,.45);backdrop-filter:blur(8px)}
+.modal-panel{
+  position:relative;
+  background:linear-gradient(160deg,#fff,#ffd6e9);
+  border-radius:28px;padding:26px 22px 22px;width:100%;max-width:340px;
+  box-shadow:0 12px 0 #c71585,0 20px 50px rgba(199,21,133,.6);
+  border:3px solid #fff;
+}
+.modal-title{
+  font-family:'Pacifico',cursive;
+  font-size:22px;font-weight:400;margin-bottom:20px;
+  color:#ff1493;text-align:center;
+  text-shadow:1px 1px 0 #ffd6e9;
+}
+.modal-label{
+  display:block;font-size:13px;color:#c71585;
+  margin-bottom:6px;margin-top:14px;
+  font-weight:700;letter-spacing:1px;
+  font-family:'Fredoka',sans-serif;
+}
+.modal-label:first-of-type{margin-top:0}
+.modal-input{
+  width:100%;
+  background:rgba(255,255,255,.7);
+  border:2.5px solid #ffd6e9;
+  border-radius:14px;padding:13px 16px;color:#6b0035;
+  font-size:16px;font-family:'Fredoka',sans-serif;outline:none;
+  -webkit-appearance:none;appearance:none;font-weight:500;
+}
+.modal-input::placeholder{color:#e88bb5}
+.modal-input:focus{border-color:#ff1493;background:#fff}
+.modal-btns{display:flex;gap:10px;margin-top:24px}
+.modal-btn{
+  flex:1;padding:14px;border:2.5px solid #fff;border-radius:16px;
+  font-size:16px;font-weight:600;font-family:'Fredoka',sans-serif;
+  cursor:pointer;letter-spacing:1px;
+}
+.modal-btn.cancel{
+  background:rgba(255,255,255,.7);color:#c71585;
+  box-shadow:0 4px 0 rgba(199,21,133,.3);
+}
+.modal-btn.cancel:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(199,21,133,.3)}
+.modal-btn.save{
+  background:linear-gradient(145deg,#ff69b4,#ff1493);color:#fff;
+  box-shadow:0 4px 0 #c71585;text-shadow:1px 1px 0 #c71585;
+}
+.modal-btn.save:active{transform:translateY(3px);box-shadow:0 1px 0 #c71585}
+.toast{
+  position:fixed;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:linear-gradient(145deg,#ff69b4,#ff1493);
+  color:#fff;padding:13px 28px;border-radius:30px;
+  font-size:15px;font-weight:700;font-family:'Fredoka',sans-serif;
+  opacity:0;transition:all .3s cubic-bezier(.5,1.5,.5,1);
+  pointer-events:none;z-index:2000;white-space:nowrap;
+  box-shadow:0 6px 0 #c71585,0 8px 24px rgba(199,21,133,.5);
+  letter-spacing:1px;border:2.5px solid #fff;
+  text-shadow:1px 1px 0 #c71585;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+</style>
+</head>
+<body>
+<div class="view" id="timerView">
+  <div class="main">
+    <div class="total-label">♡ Total Time ♡</div>
+    <div class="total-time" id="totalTime">--:--</div>
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="current-card">
+      <div class="step-index" id="stepIndex">STEP 1 / 1</div>
+      <div class="step-name" id="stepName">載入中…</div>
+      <div class="step-time" id="stepTime">--:--</div>
+    </div>
+    <div class="controls">
+      <button id="prevBtn">⏮</button>
+      <button class="main-btn" id="playBtn">▶ Start</button>
+      <button id="nextBtn">⏭</button>
+      <button id="resetBtn">⟳</button>
+      <button id="settingsBtn">⚙</button>
+    </div>
+    <div class="step-list" id="stepList"></div>
+  </div>
+</div>
+<div class="view hidden" id="settingsView">
+  <div class="settings-header">
+    <button id="backBtn">← Back</button>
+    <div class="settings-total">總時長：<span id="settingsTotal">--</span></div>
+  </div>
+  <div class="settings-list" id="settingsList"></div>
+  <div class="settings-hint">按住 ☰ 拖動排序　·　點行編輯</div>
+  <button class="add-btn" id="addBtn">+ Add Step ♡</button>
+</div>
+<div class="modal hidden" id="editModal">
+  <div class="modal-bg" id="modalBg"></div>
+  <div class="modal-panel">
+    <div class="modal-title" id="modalTitle">Edit Step</div>
+    <label class="modal-label">NAME 名稱</label>
+    <input class="modal-input" id="editName" type="text" placeholder="例如：眼影" autocomplete="off">
+    <label class="modal-label">MINUTES 分鐘</label>
+    <input class="modal-input" id="editMin" type="number" inputmode="decimal" step="0.5" min="0.1" placeholder="例如：1 或 1.5">
+    <div class="modal-btns">
+      <button class="modal-btn cancel" id="editCancel">取消</button>
+      <button class="modal-btn save" id="editSave">儲存 ♡</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+'use strict';
+var STORAGE_KEY = 'step_timer_barbie_v1';
+function uid(){ return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+var DEFAULTS = [
+  ['洗臉',60],['保濕',60],['唇膏',60],['隔離乳/防曬',60],
+  ['氣墊',120],['遮瑕',180],['散粉',60],['修容',120],
+  ['高光',120],['眼影',180],['眉毛',120],['腮紅',60],
+  ['睫毛',180],['眼線',120],['假睫毛',180],['點痣',60],
+  ['口紅',660]
+];
+var steps = [], remaining = [], idx = 0;
+var running = false, timer = null;
+var suppressClick = false, editingId = null, audioCtx = null;
+var $totalTime = document.getElementById('totalTime');
+var $progressFill = document.getElementById('progressFill');
+var $stepIndex = document.getElementById('stepIndex');
+var $stepName = document.getElementById('stepName');
+var $stepTime = document.getElementById('stepTime');
+var $stepList = document.getElementById('stepList');
+var $playBtn = document.getElementById('playBtn');
+var $timerView = document.getElementById('timerView');
+var $settingsView = document.getElementById('settingsView');
+var $settingsList = document.getElementById('settingsList');
+var $settingsTotal = document.getElementById('settingsTotal');
+var $editModal = document.getElementById('editModal');
+var $modalTitle = document.getElementById('modalTitle');
+var $editName = document.getElementById('editName');
+var $editMin = document.getElementById('editMin');
+var $toast = document.getElementById('toast');
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+function fmt(sec){ if(sec<0)sec=0; return pad(Math.floor(sec/60))+':'+pad(Math.floor(sec%60)); }
+function fmtShort(sec){
+  if(sec<60) return sec+' 秒';
+  var m = sec/60;
+  if(m===Math.floor(m)) return m+' 分';
+  return m.toFixed(1)+' 分';
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function toast(msg){
+  $toast.textContent = msg;
+  $toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function(){ $toast.classList.remove('show'); }, 1600);
+}
+function load(){
+  var raw = null;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch(e){}
+  if(raw){
+    try{
+      var p = JSON.parse(raw);
+      if(Array.isArray(p) && p.length){
+        steps = p.map(function(x){
+          return { id: x.id || uid(), n: String(x.n||''), s: Math.max(1, parseInt(x.s,10)||60) };
+        });
+      }
+    }catch(e){}
+  }
+  if(!steps.length){
+    steps = DEFAULTS.map(function(d){ return { id: uid(), n: d[0], s: d[1] }; });
+  }
+  resetAll();
+}
+function save(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(steps)); } catch(e){}
+}
+function beep(){
+  try {
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    var t = audioCtx.currentTime;
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 1046.5;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.25, t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+0.28);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t); o.stop(t+0.3);
+    var o2 = audioCtx.createOscillator();
+    var g2 = audioCtx.createGain();
+    o2.type = 'sine';
+    o2.frequency.value = 1318.5;
+    g2.gain.setValueAtTime(0.0001, t+0.08);
+    g2.gain.exponentialRampToValueAtTime(0.2, t+0.12);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t+0.38);
+    o2.connect(g2); g2.connect(audioCtx.destination);
+    o2.start(t+0.08); o2.stop(t+0.4);
+  } catch(e){}
+}
+function feedback(){
+  if(navigator.vibrate) navigator.vibrate(80);
+  beep();
+}
+function totalRemaining(){ var t=0; for(var i=0;i<remaining.length;i++) t+=remaining[i]; return t; }
+function grandTotal(){ var t=0; for(var i=0;i<steps.length;i++) t+=steps[i].s; return t; }
+function resetAll(){
+  if(timer){ clearInterval(timer); timer=null; }
+  running = false;
+  idx = 0;
+  remaining = steps.map(function(s){ return s.s; });
+  render();
+}
+function tick(){
+  if(totalRemaining() <= 0){ stopTimer(); running=false; render(); return; }
+  if(remaining[idx] > 0) remaining[idx]--;
+  var hopped = false;
+  while(idx < steps.length-1 && remaining[idx] <= 0){
+    idx++;
+    hopped = true;
+  }
+  if(hopped) feedback();
+  if(totalRemaining() <= 0){ stopTimer(); running=false; feedback(); }
+  render();
+}
+function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
+function startTimer(){
+  if(running) return;
+  if(totalRemaining() <= 0) return;
+  try {
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e){}
+  running = true;
+  timer = setInterval(tick, 1000);
+  render();
+}
+function pauseTimer(){ running=false; stopTimer(); render(); }
+function render(){
+  var total = totalRemaining();
+  var gt = grandTotal();
+  $totalTime.textContent = fmt(total);
+  $totalTime.classList.remove('warn','danger');
+  if(total <= 300) $totalTime.classList.add('danger');
+  else if(total <= 600) $totalTime.classList.add('warn');
+  $progressFill.style.width = (gt>0 ? ((gt-total)/gt*100) : 0) + '%';
+  if(steps.length){
+    if(idx >= steps.length) idx = steps.length-1;
+    if(idx < 0) idx = 0;
+    var cur = steps[idx];
+    $stepIndex.textContent = 'STEP ' + (idx+1) + ' / ' + steps.length;
+    $stepName.textContent = cur.n;
+    var r = remaining[idx];
+    $stepTime.textContent = fmt(r);
+    $stepTime.classList.remove('warn','danger');
+    if(r <= 10) $stepTime.classList.add('danger');
+    else if(r <= 30) $stepTime.classList.add('warn');
+  } else {
+    $stepIndex.textContent = '未有步驟';
+    $stepName.textContent = '請去設定新增';
+    $stepTime.textContent = '--:--';
+  }
+  $playBtn.textContent = running ? '⏸ Pause' : (total<=0 ? '✓ Done' : '▶ Start');
+  renderStepList();
+}
+function renderStepList(){
+  var html = '';
+  for(var i=0;i<steps.length;i++){
+    var cls = 'step-item';
+    if(i === idx) cls += ' current';
+    else if(i < idx) cls += ' done';
+    var ts = (i === idx) ? fmt(remaining[i]) : fmt(steps[i].s);
+    html += '<div class="'+cls+'" data-i="'+i+'">'
+      + '<div class="num">'+(i<idx?'✓':(i+1))+'</div>'
+      + '<div class="name">'+esc(steps[i].n)+'</div>'
+      + '<div class="t">'+ts+'</div>'
+      + '</div>';
+  }
+  $stepList.innerHTML = html;
+}
+$stepList.addEventListener('click', function(e){
+  var el = e.target.closest ? e.target.closest('.step-item') : null;
+  if(!el) return;
+  idx = parseInt(el.getAttribute('data-i'), 10);
+  render();
+});
+$playBtn.addEventListener('click', function(){ running ? pauseTimer() : startTimer(); });
+document.getElementById('resetBtn').addEventListener('click', function(){
+  if(confirm('確定重置所有計時？')) resetAll();
+});
+document.getElementById('prevBtn').addEventListener('click', function(){
+  if(idx > 0){ idx--; remaining[idx] = steps[idx].s; render(); }
+});
+document.getElementById('nextBtn').addEventListener('click', function(){
+  if(idx < steps.length-1){ remaining[idx] = 0; idx++; render(); }
+});
+document.getElementById('settingsBtn').addEventListener('click', function(){
+  pauseTimer();
+  $timerView.classList.add('hidden');
+  $settingsView.classList.remove('hidden');
+  renderSettings();
+});
+document.getElementById('backBtn').addEventListener('click', function(){
+  $settingsView.classList.add('hidden');
+  $timerView.classList.remove('hidden');
+  resetAll();
+});
+function renderSettings(){
+  var html = '';
+  for(var i=0;i<steps.length;i++){
+    var s = steps[i];
+    html += '<div class="settings-row" data-id="'+s.id+'">'
+      + '<div class="drag-handle">☰</div>'
+      + '<div class="name">'+esc(s.n)+'</div>'
+      + '<div class="t">'+fmtShort(s.s)+'</div>'
+      + '<button class="edit-btn">✎</button>'
+      + '</div>';
+  }
+  $settingsList.innerHTML = html;
+  var gt = grandTotal();
+  $settingsTotal.textContent = fmt(gt)+'（'+Math.floor(gt/60)+' 分）';
+}
+$settingsList.addEventListener('click', function(e){
+  if(suppressClick) return;
+  var row = e.target.closest ? e.target.closest('.settings-row') : null;
+  if(!row) return;
+  openEdit(row.getAttribute('data-id'));
+});
+function openEdit(id){
+  var step = null;
+  for(var i=0;i<steps.length;i++){ if(steps[i].id === id){ step = steps[i]; break; } }
+  if(!step) return;
+  editingId = id;
+  $modalTitle.textContent = 'Edit Step';
+  $editName.value = step.n;
+  var m = step.s / 60;
+  $editMin.value = (m === Math.floor(m)) ? String(m) : m.toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
+  $editModal.classList.remove('hidden');
+  setTimeout(function(){ $editName.focus(); }, 150);
+}
+function openAdd(){
+  editingId = null;
+  $modalTitle.textContent = 'Add Step ♡';
+  $editName.value = '';
+  $editMin.value = '1';
+  $editModal.classList.remove('hidden');
+  setTimeout(function(){ $editName.focus(); }, 150);
+}
+function closeModal(){
+  $editModal.classList.add('hidden');
+  editingId = null;
+}
+document.getElementById('addBtn').addEventListener('click', openAdd);
+document.getElementById('editCancel').addEventListener('click', closeModal);
+document.getElementById('modalBg').addEventListener('click', closeModal);
+document.getElementById('editSave').addEventListener('click', function(){
+  var name = $editName.value.trim();
+  var mins = parseFloat($editMin.value);
+  if(!name){ toast('請輸入名稱'); return; }
+  if(isNaN(mins) || mins <= 0){ toast('請輸入有效時長'); return; }
+  var sec = Math.max(1, Math.round(mins * 60));
+  if(editingId){
+    for(var i=0;i<steps.length;i++){
+      if(steps[i].id === editingId){ steps[i].n = name; steps[i].s = sec; break; }
+    }
+    toast('已更新 ♡');
+  } else {
+    steps.push({ id: uid(), n: name, s: sec });
+    toast('已新增 ♡');
+  }
+  save();
+  closeModal();
+  renderSettings();
+});
+(function setupDrag(){
+  var list = $settingsList;
+  var pressTimer = null;
+  var active = null;
+  var startY = 0;
+  function getRow(el){
+    while(el && el !== list){
+      if(el.nodeType === 1 && el.classList && el.classList.contains('settings-row')) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+  function beginDrag(row){
+    active = { row: row, h: row.offsetHeight + 1 };
+    row.classList.add('dragging');
+    if(navigator.vibrate) navigator.vibrate(15);
+  }
+  function moveDrag(y){
+    if(!active) return;
+    var dy = y - startY;
+    active.row.style.transform = 'translateY('+dy+'px) scale(1.03)';
+    var rows = Array.prototype.slice.call(list.querySelectorAll('.settings-row'));
+    var curIdx = rows.indexOf(active.row);
+    var newIdx = curIdx;
+    if(dy < -active.h/2 && curIdx > 0) newIdx = curIdx - 1;
+    else if(dy > active.h/2 && curIdx < rows.length-1) newIdx = curIdx + 1;
+    if(newIdx !== curIdx){
+      var target = rows[newIdx];
+      if(newIdx < curIdx) list.insertBefore(active.row, target);
+      else list.insertBefore(active.row, target.nextSibling);
+      startY = y;
+      active.row.style.transform = 'translateY(0) scale(1.03)';
+      if(navigator.vibrate) navigator.vibrate(5);
+    }
+  }
+  function endDrag(){
+    if(pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
+    if(!active) return;
+    active.row.classList.remove('dragging');
+    active.row.style.transform = '';
+    active = null;
+    var rows = list.querySelectorAll('.settings-row');
+    var ids = [];
+    for(var i=0;i<rows.length;i++) ids.push(rows[i].getAttribute('data-id'));
+    var map = {};
+    steps.forEach(function(s){ map[s.id] = s; });
+    steps = ids.map(function(id){ return map[id]; }).filter(Boolean);
+    save();
+    suppressClick = true;
+    setTimeout(function(){ suppressClick = false; }, 350);
+  }
+  list.addEventListener('touchstart', function(e){
+    var t = e.target;
+    var handle = (t && t.closest) ? t.closest('.drag-handle') : null;
+    if(!handle) return;
+    var row = getRow(handle);
+    if(!row) return;
+    startY = e.touches[0].clientY;
+    pressTimer = setTimeout(function(){
+      pressTimer = null;
+      beginDrag(row);
+    }, 150);
+  }, { passive: true });
+  list.addEventListener('touchmove', function(e){
+    if(pressTimer && !active){
+      if(Math.abs(e.touches[0].clientY - startY) > 8){
+        clearTimeout(pressTimer); pressTimer = null;
+      }
+      return;
+    }
+    if(!active) return;
+    if(e.cancelable) e.preventDefault();
+    moveDrag(e.touches[0].clientY);
+  }, { passive: false });
+  list.addEventListener('touchend', endDrag);
+  list.addEventListener('touchcancel', endDrag);
+  list.addEventListener('mousedown', function(e){
+    var t = e.target;
+    var handle = (t && t.closest) ? t.closest('.drag-handle') : null;
+    if(!handle) return;
+    var row = getRow(handle);
+    if(!row) return;
+    e.preventDefault();
+    startY = e.clientY;
+    pressTimer = setTimeout(function(){
+      pressTimer = null;
+      beginDrag(row);
+    }, 150);
+  });
+  document.addEventListener('mousemove', function(e){
+    if(pressTimer && !active){
+      if(Math.abs(e.clientY - startY) > 8){
+        clearTimeout(pressTimer); pressTimer = null;
+      }
+      return;
+    }
+    if(!active) return;
+    e.preventDefault();
+    moveDrag(e.clientY);
+  });
+  document.addEventListener('mouseup', endDrag);
+})();
+load();
+})();
+</script>
+</body>
+</html>
